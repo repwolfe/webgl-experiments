@@ -1,4 +1,3 @@
-glMatrix/
 glMatrix/*
 !glMatrix/dist/
 !glMatrix/dist/*
