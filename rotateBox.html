@@ -52,6 +52,8 @@
 		else {
 			// Pass the normal to the shader
 			vec3 transformedNormal = uNMatrix * aVertexNormal;
+			// The cosine of the angle between the normal and the light direction
+			// It's 1 if the angle is 0, and 0 if the angle is 90 degrees or greater
 			float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);
 			vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;
 		}
@@ -219,7 +221,11 @@
 		gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
 		gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
 
+		// Transform the normals based off the model view matrix
+		// but ignore the translation information, just use the rotation info
 		var normalMatrix = mat3.create();
+
+		// Use just the transposed inverse of the top 3x3 values of the MvMatrix
 		mat4.toInverseMat3(mvMatrix, normalMatrix);		// NO LONGER EXISTS
 		mat3.transpose(normalMatrix, normalMatrix);
 		gl.uniformMatrix3fv(shaderProgram.nMatrixUniform, false, normalMatrix);
