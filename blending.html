@@ -10,12 +10,14 @@
 	varying vec2 vTextureCoord;
 	varying vec3 vLightWeighting;
 
+	uniform float uAlpha;
+
 	uniform sampler2D uSampler;
 
 	void main(void) {
 		// Output the color
 		vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
-		gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a);
+		gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a * uAlpha);
 	}
 </script>
 
@@ -151,6 +153,7 @@
 		shaderProgram.ambientColorUniform = gl.getUniformLocation(shaderProgram, "uAmbientColor");
 		shaderProgram.lightingDirectionUniform = gl.getUniformLocation(shaderProgram, "uLightingDirection");
 		shaderProgram.directionalColorUniform = gl.getUniformLocation(shaderProgram, "uDirectionalColor");
+		shaderProgram.alphaUniform = gl.getUniformLocation(shaderProgram, "uAlpha");
 	}
 
 	function handleLoadedTexture(texture) {
@@ -165,15 +168,15 @@
 		gl.bindTexture(gl.TEXTURE_2D, null);
 	}
 
-	var crateTexture;
+	var glassTexture;
 
 	function initTexture() {
-		crateTexture = gl.createTexture();
-		crateTexture.image = new Image();
-		crateTexture.image.onload = function() {
-			handleLoadedTexture(crateTexture);
+		glassTexture = gl.createTexture();
+		glassTexture.image = new Image();
+		glassTexture.image.onload = function() {
+			handleLoadedTexture(glassTexture);
 		}
-		crateTexture.image.src = "crate.gif";
+		glassTexture.image.src = "glass.gif";
 	}
 
 	var mvMatrix = mat4.create();
@@ -454,8 +457,20 @@
 		gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, cubeVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
 		gl.activeTexture(gl.TEXTURE0);
-		gl.bindTexture(gl.TEXTURE_2D, crateTexture);
+		gl.bindTexture(gl.TEXTURE_2D, glassTexture);
 		gl.uniform1i(shaderProgram.sampleUniform, 0);
+
+		var blending = document.getElementById("blending").checked;
+		if (blending) {
+			gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+			gl.enable(gl.BLEND);
+			gl.disable(gl.DEPTH_TEST);
+			gl.uniform1f(shaderProgram.alphaUniform, parseFloat(document.getElementById("alpha").value));
+		} else {
+			gl.disable(gl.BLEND);
+			gl.enable(gl.DEPTH_TEST);
+		}
+
 		var lighting = document.getElementById("lighting").checked;
 		gl.uniform1i(shaderProgram.useLightingUniform, lighting);
 		if (lighting) {
@@ -530,6 +545,9 @@
 <body onload="webGLStart();">
 	<canvas id="my-canvas" style="border: none;" width="500" height="500"> </canvas>
 	<br />
+	<input type="checkbox" id="blending" checked />Use blending<br/>
+	Alpha level <input type="text" id="alpha" value="0.5" /><br/>
+	<br/>
 	<input type="checkbox" id="lighting" checked />Use Lighting<br />
 	<h2>Directional Light:</h2>
 	<table style="border: 0; padding: 10px">
